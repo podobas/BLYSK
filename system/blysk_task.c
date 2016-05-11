@@ -196,54 +196,31 @@ static inline void blysk__TASK_submit_complex_bookmark(void (*func)(void *), voi
 
 
 
-#if (GCC_VERSION >= 40800 && GCC_VERSION < 409000)
-
+#if __GNUC_PREREQ(5,1)
 void
 GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
-           long arg_size, long arg_align, char if_clause,
-           unsigned flags __attribute__((unused)))
+	   long arg_size, long arg_align, bool if_clause, unsigned flags,
+	   void **depend, int priority)
 {
-#if defined(__STAT_TASK)
-    blysk__THREAD_get()->tsc[0] = rdtsc();
-#endif
 
-  handleSpec();
-  blysk__TASK_submit_simple(fn, data, cpyfn, arg_size, arg_align);
-
-
-#if defined(__STAT_TASK)
-   blysk__THREAD_get()->tsc[4] = rdtsc();
-#endif
-}
-
-#endif
-
-
-#if (GCC_VERSION >= 409000)
-void
-GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
-        long arg_size, long arg_align, bool if_clause, unsigned flags,
-        void **depend) {
-
-#if defined(__STAT_TASK)
-    blysk__THREAD_get()->tsc[0] = rdtsc();
-#endif
-
+  #if defined(__STAT_TASK)
+      blysk__THREAD_get()->tsc[0] = rdtsc();
+  #endif
 
     handleSpec();
     /* The representation of what GCC generates and what BlyskCC generates are no compatible.
        Here we transform from GCC to BlyskCC versioning 
        NOTE: GCC does not differ between out and inout. This can be a problem later. */
     if (depend == NULL) {
-#if BLYSK_ENABLE_FANOUT_CONTROL != 0
+  #if BLYSK_ENABLE_FANOUT_CONTROL != 0
         if(expectTrue(blysk__thread->fanout != 0)) {
             blysk__TASK_submit_simple(fn, data, cpyfn, arg_size, arg_align);
         } else {
             fn(data);
         }
-#else // BLYSK_ENABLE_FANOUT_CONTROL == 0
+  #else // BLYSK_ENABLE_FANOUT_CONTROL == 0
         blysk__TASK_submit_simple(fn, data, cpyfn, arg_size, arg_align);
-#endif
+  #endif
         return;
         
     }
@@ -253,8 +230,68 @@ GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
     blysk__TASK_submit_complex_bookmark(fn, data, cpyfn, arg_size, arg_align, (char**) (depend + 2 + num_inout), num_depend - num_inout, (char**) depend + 2, num_inout, NULL, 0, 0);
 
 
-#if defined(__STAT_TASK)
-   blysk__THREAD_get()->tsc[4] = rdtsc();
-#endif
+  #if defined(__STAT_TASK)
+     blysk__THREAD_get()->tsc[4] = rdtsc();
+  #endif
 }
+
+#elif __GNUC_PREREQ(4,9)
+  void
+  GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+          long arg_size, long arg_align, bool if_clause, unsigned flags,
+          void **depend) {
+
+  #if defined(__STAT_TASK)
+      blysk__THREAD_get()->tsc[0] = rdtsc();
+  #endif
+
+
+    handleSpec();
+    /* The representation of what GCC generates and what BlyskCC generates are no compatible.
+       Here we transform from GCC to BlyskCC versioning 
+       NOTE: GCC does not differ between out and inout. This can be a problem later. */
+    if (depend == NULL) {
+  #if BLYSK_ENABLE_FANOUT_CONTROL != 0
+        if(expectTrue(blysk__thread->fanout != 0)) {
+            blysk__TASK_submit_simple(fn, data, cpyfn, arg_size, arg_align);
+        } else {
+            fn(data);
+        }
+  #else // BLYSK_ENABLE_FANOUT_CONTROL == 0
+        blysk__TASK_submit_simple(fn, data, cpyfn, arg_size, arg_align);
+  #endif
+        return;
+        
+    }
+    // TODO do we actually want to have support for the if_clause? 
+    unsigned int num_depend = (uintptr_t) depend[0];
+    unsigned int num_inout = (uintptr_t) depend[1];
+    blysk__TASK_submit_complex_bookmark(fn, data, cpyfn, arg_size, arg_align, (char**) (depend + 2 + num_inout), num_depend - num_inout, (char**) depend + 2, num_inout, NULL, 0, 0);
+
+
+  #if defined(__STAT_TASK)
+     blysk__THREAD_get()->tsc[4] = rdtsc();
+  #endif
+  }
+
+#elif __GNUC_PREREQ(4,8)
+  void
+  GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+           long arg_size, long arg_align, char if_clause,
+           unsigned flags __attribute__((unused)))
+  {
+  #if defined(__STAT_TASK)
+      blysk__THREAD_get()->tsc[0] = rdtsc();
+  #endif
+
+    handleSpec();
+    blysk__TASK_submit_simple(fn, data, cpyfn, arg_size, arg_align);
+
+
+  #if defined(__STAT_TASK)
+     blysk__THREAD_get()->tsc[4] = rdtsc();
+  #endif
+  }
 #endif
+
+

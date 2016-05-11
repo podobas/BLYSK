@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <blysk_config.h>
+#include <features.h>
 
 #ifdef __cplusplus 
 extern "C" {
@@ -30,21 +31,25 @@ void GOMP_taskwait(void)
 __attribute((externally_visible))
 ;
 
-
-
-#if (GCC_VERSION >= 40800 && GCC_VERSION < 409000)
+#if __GNUC_PREREQ(5,1)
 void
+GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+	   long arg_size, long arg_align, bool if_clause, unsigned flags,
+	   void **depend, int priority);
+#elif __GNUC_PREREQ(4,9)
+GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+        long arg_size, long arg_align, bool if_clause, unsigned flags,
+        void **depend __attribute((nonnull(1), externally_visible));
+#elif __GNUC_PREREQ(4,8)
 GOMP_task (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
            long arg_size, long arg_align, char if_clause,
            unsigned flags __attribute__((unused)));
+#else
+	#error Unsupport GCC version
 #endif
 
-#if (GCC_VERSION >= 40900)
-void
-GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
-        long arg_size, long arg_align, bool if_clause, unsigned flags,
-        void **depend) __attribute((nonnull(1), externally_visible));
-#endif
+
+
 
 void
 GOMP_taskloop (void (*) (void *), void *, void (*) (void *, void *),

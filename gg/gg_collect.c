@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 #include <stdlib.h>
 #include <blysk_public.h>
 #include <pthread.h>
-#include "system/blysk_dep_imp.h"
+#include "../system/blysk_dep_imp.h"
 
 
 #if defined(__STAT_TASK)

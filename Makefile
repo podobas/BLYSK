@@ -21,7 +21,7 @@ FLAGS += -DBLYSK_ENABLE_SPEC=1
 endif
 
 ## Check if Grain-Graph debugging is online
-FLAGS += -D__STAT_TASK
+#FLAGS += -D__STAT_TASK
 
 
 BLYSK_SRC += system/bootup.c \

@@ -269,7 +269,7 @@ fail:
 #define STAT_UPDATE_TW ;
 #define STAT_RESUE_TW ;
 #define STAT_FINISH_TW;
-
+#define STAT_RESUME_TW  ;
 #endif
 
 
