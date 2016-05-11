@@ -1,0 +1,34 @@
+-----------------------------------------------------------------
+How to use:
+-----------------------------------------------------------------
+
+1) Set the C_INCLUDE_PATH environment variable to point to the library/include/ directory
+   e.g. export C_INCLUDE_PATH=/home/artur/.../library/include/:$C_INCLUDE_PATH
+
+2) Set the LIBRARY_PATH environment variable to library/ directory
+   e.g.  export LIBRARY_PATH=/home/artur/.../library/:$LIBRARY_PATH
+
+3) Set the LD_LIBRARY_PATH environment variable to the library/ directory
+   e.g.  export LD_LIBRARY_PATH=/home/artur/.../library/:$LD_LIBRARY_PATH
+
+4) Go into tests folder
+
+5) Go into either directory and type make
+
+6) Set the following environment variables: 
+   export OMP_NUM_THREADS=4
+   export OMP_TASK_SCHEDULER=worksteal
+
+7) Run the aplication
+
+
+
+
+-----------------------------------------------------------------
+How to compile
+-----------------------------------------------------------------
+
+To compile YOUR OpenMP task program, you need to the following:
+
+gcc -fopenmp -c *your_source.c*
+gcc -lblysk -ldl -lpthread *your_source.o* -o *your_binary*
