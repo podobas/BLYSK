@@ -82,6 +82,8 @@ static inline blysk_task* blysk__create_task(blysk_task* parent, void (*func)(vo
     new_task->__dep_manager = NULL;
     new_task->FPN[0] = NULL;
     new_task->FPN[1] = NULL;
+
+    new_task->Type = UNIT;
     trackTask(new_task);
 
 
@@ -112,6 +114,46 @@ static inline blysk_task* blysk__create_task(blysk_task* parent, void (*func)(vo
 
     return new_task;
 }
+
+/* -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   Function: blysk__create_brood_Task
+   Description: Creates a brood task and returns the task initialized */
+blysk_task *blysk__create_brood_task (blysk_task *parent , void (*func)(void *), void *data , long start, long end)
+{
+	blysk_task *new_task = allocTask (0 , 0,  0);
+	new_task->tsk = func;
+	new_task->args = data;
+	new_task->_dependencies = 0;
+	new_task->_udependencies = (Counter) {0};
+
+	if (expectTrue(parent == NULL)) 
+	{
+	  fetchAndAddCounter(&blysk__THREAD_get_task()->_parent->_children, 1, RELAXED);
+ 	  new_task->_parent = blysk__THREAD_get_task()->_parent;
+	}
+	else 
+	{
+	  fetchAndAddCounter(&parent->_children, 1, RELAXED);
+	  new_task->_parent = parent;
+	}
+
+
+	new_task->__dep_manager = NULL;
+	new_task->FPN[0] = NULL;
+	new_task->FPN[1] = NULL;
+	new_task->Type = BROOD;
+	new_task->iter_space[0] = start;
+	new_task->iter_space[1] = end;
+	trackTask(new_task);
+	new_task->creator = blysk__THREAD_get_rid();
+	return new_task;	
+}
+
+
+
+
+
+/* Two new types of task : iteration task and divide and conquert task */
 
 /**  Submits a "simple" task. A simple task is one which does not have any special functionality.
                Special functionality in this case is "depend" or "final". */

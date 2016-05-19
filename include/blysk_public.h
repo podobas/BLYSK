@@ -210,10 +210,31 @@ typedef struct blysk_thread_t {
 } blysk_thread;
 
 
+/* Added: Task Type Enumerator 
+*   - Unit = A unit task (Traditional OpenMPv3 Task)
+*   - Iterator = A task containing iterations
+*   - Brood = A task thjat further spawns task (often used before iterators) 
+*/
+
+enum task_content_type { UNIT, ITERATOR, BROOD};
+
+
+typedef struct {
+  long start,end,step;
+  void (*fn)(void *);
+  unsigned long arg_size;
+  void *data;
+  long arg_align;
+  char *args;
+  void (*cpyfn)(void *, void *);
+  void *probe;
+} blysk__iterator_info;
+
 /* Added: CORE_Profile counters */
 
 typedef struct blysk_task_t {
     /* Number of children of the current task */
+    enum task_content_type Type;
     Counter _children;
     Counter _udependencies; /*< Number of unsatisfied dependencies. Heavily updated with atomics and locks, maybe store together with children. */
 #if BLYSK_ENABLE_DATASPEC != 0
@@ -221,6 +242,10 @@ typedef struct blysk_task_t {
 #endif
     char PADDING[64 - sizeof (Counter) * 2 - (BLYSK_ENABLE_DATASPEC ? sizeof(void*) : 0)];
     unsigned long long __dep_LOCK_mask; /*< Bitmask of the depdency tries this task uses */
+
+    /* Iterator information */
+    long iter_space[2];
+    unsigned long creator;
 
     void (*tsk)(void *);
     //  void *args;
@@ -280,6 +305,9 @@ __attribute((const)) static inline blysk_thread * blysk__THREAD_get(void)  {
     return blysk__thread;
 }
 
+/** Create a brood task */
+blysk_task *blysk__create_brood_task (blysk_task *parent , void (*func)(void *), void *data , long start, long end);
+
 /** Return the current task */
 static inline blysk_task * blysk__THREAD_get_task(void) {
     return blysk__thread->implicit_task;
@@ -305,6 +333,13 @@ static inline void blysk__THREAD_set_icv(blysk_icv *icv) {
     blysk__thread -> icv = icv;
 }
 
+
+/** Quickly send a task to scheduler */
+static inline void blysk__SEND_Scheduler ( blysk_task *tsk )
+{
+    blysk_icv *icv = blysk__THREAD_get_icv();
+    icv->scheduler.scheduler_release(blysk__THREAD_get(), tsk);
+}
 
 
 

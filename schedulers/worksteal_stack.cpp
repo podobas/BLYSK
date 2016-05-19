@@ -138,6 +138,7 @@ FA_FLATTEN static inline blysk_task* myfetch(blysk_thread*__restrict thr) {
         assume(t != (void*)(sptr)-1ll);
         return t;
     }
+
 #if BLYSK_ENABLE_FANOUT_CONTROL != 0
     __atomic_store_n(&_icv->booted_threads[tl->victim]->fanout, 1, MOrder::RELAXED);
 #endif
