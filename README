@@ -1,5 +1,6 @@
 ------------------------------------------------------
 Compiling and using the BLYSK prototype runtime system
+Contact Info: podobas@dtu.dk podobas@kth.se
 ------------------------------------------------------
 
 Go into the cloned folder and type 'make'. This should successfully compile and assemble the runtime system (libblysk.a) and a set of scheduler plugins (*.so)
