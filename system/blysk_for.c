@@ -49,37 +49,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 
 
-typedef struct {
-	unsigned long long aggr_cycle; //Aggregated number of cycles
-	unsigned int prob_iter;		//Number of iterations probed
-	void (*vaddr)(void*);		//Virtual address of function
-	char pp;			// Probe-Please
-} Probe;
-
-int numF = 0;
-Probe Functions[1024];
-
-Probe * FindProbedFunction ( void (*f)(void*) )
-{
-	int i;
-	for (i=0;i<numF;i++)
-		if (Functions[i].vaddr == f)
-			return &Functions[i];
-	return NULL;
-}
-
-void runAndProbeIterationTask ( blysk_task * tsk )
-{
-}
 
 void runIterationTask ( blysk_task *tsk )
 {
 	unsigned long long _t1;
 	blysk__iterator_info *info = (blysk__iterator_info *) tsk->args;
-//	Probe *probe = (Probe *) info->probe;
-
-//	if (probe->pp)
-//		_t1 = rdtsc();
 
 	if (tsk->iter_space[1] - tsk->iter_space[0] == 0) return;
 
@@ -96,12 +70,6 @@ void runIterationTask ( blysk_task *tsk )
 	((long *) arg)[1] = tsk->iter_space[1];
 
 	info->fn(arg);
-
-//	if (probe->pp)
-//	{
-//		__sync_fetch_and_add(&probe->aggr_cycle , rdtsc() - _t1);
-//		__sync_fetch_and_add(&probe->prob_iter, tsk->iter_space[1] - tsk->iter_space[0]);
-//	}
 
 	if (tsk->_children.count != 0)
 		GOMP_taskwait();
@@ -285,24 +253,6 @@ void BLYSK__brood_internal ( void *args)
 }
 
 
-/*
-	if ( expectFalse ( _tsk->iter_space[1] - _tsk->iter_space[0] <=  ((info->end - info->start)/128) )
-	    && (_tsk->iter_space[1] - _tsk->iter_space[0]) >= 8 )
-	{
-		 long start = _tsk->iter_space[0], end = _tsk->iter_space[1];
-		fetchAndAddCounter(&_tsk->_parent->_children, 1, RELAXED);
-		blysk_task *i1_task = blysk__create_brood_task ( NULL , &BLYSK__brood_internal, args, start + ((end-start) >> 2) ,end);
-
-		blysk__SEND_Scheduler (i1_task);
-		 _tsk->iter_space[0] = start;
-		 _tsk->iter_space[1] =  start+((end-start) >> 2);
-		num_upd++;
-		
-		runIterationTask ( _tsk );
-
-		goto _complete;
-	}*/
-
 #endif
 
 
@@ -314,46 +264,6 @@ GOMP_taskloop (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	       unsigned long num_tasks, int priority,
 	       long start, long end, long step)
 {
-
-  /* Ok...Lets do this. */
-
-
-  // Implementation #1: Naive approach only for the IWOMP 2016 paper on iteration stress. Do not use this one as its not fully complete.
- /* int i;
-  for (i=start; i< end ; i+=1)
-  {
-      char *arg = (char *) malloc(arg_size + arg_align - 1);
-      if (cpyfn)
-	{
-	  cpyfn (arg, data);
-	}
-      else
-	memcpy (arg, data, arg_size);
-      ((long *)arg)[0] = i;
-      ((long *)arg)[1] = i+1;
-	
-      GOMP_task ( fn , arg, NULL , arg_size,  arg_align, 0 , 0 , NULL, 0 );
-  }  
-  GOMP_taskwait();
-
-  return;*/
-
-
-  /*Probe *p = FindProbedFunction(fn);
-  if (!p)
-  {
-	int old = __sync_fetch_and_add (&numF, 1);
-	Functions[old].vaddr =  fn;
-	Functions[old].aggr_cycle = 0;
-	Functions[old].prob_iter = 0;
-	Functions[old].pp = 0;
-	p = &Functions[old];
-  }
-  else
-  {
-  }*/	
-  
-
   blysk__iterator_info info;
   info.start = start;
   info.end = end;
@@ -374,14 +284,5 @@ GOMP_taskloop (void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 
   GOMP_taskwait();
 
-
-/*  if (p->pp)
-  {
-	fprintf(stderr,"\nFinished probing: %lx\n",(long) fn);
-	fprintf(stderr,"%lu cycles/iteration\n",p->aggr_cycle / p->prob_iter);
-	fprintf(stderr,"%d iterations\n",p->prob_iter);
-	p->pp =1 ;
-  }*/
-  
 
 }
