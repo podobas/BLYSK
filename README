@@ -1,34 +1,40 @@
------------------------------------------------------------------
-How to use:
------------------------------------------------------------------
+------------------------------------------------------
+Compiling and using the BLYSK prototype runtime system
+------------------------------------------------------
 
-1) Set the C_INCLUDE_PATH environment variable to point to the library/include/ directory
-   e.g. export C_INCLUDE_PATH=/home/artur/.../library/include/:$C_INCLUDE_PATH
-
-2) Set the LIBRARY_PATH environment variable to library/ directory
-   e.g.  export LIBRARY_PATH=/home/artur/.../library/:$LIBRARY_PATH
-
-3) Set the LD_LIBRARY_PATH environment variable to the library/ directory
-   e.g.  export LD_LIBRARY_PATH=/home/artur/.../library/:$LD_LIBRARY_PATH
-
-4) Go into tests folder
-
-5) Go into either directory and type make
-
-6) Set the following environment variables: 
-   export OMP_NUM_THREADS=4
-   export OMP_TASK_SCHEDULER=worksteal
-
-7) Run the aplication
+Go into the cloned folder and type 'make'. This should successfully compile and assemble the runtime system (libblysk.a) and a set of scheduler plugins (*.so)
 
 
+* Using the BLYSK prototype runtime system
 
+1) Set the C_INCLUDE_PATH environmental variable to point into the include folder of the cloned repo
 
------------------------------------------------------------------
-How to compile
------------------------------------------------------------------
+2) Set the LIBRARY_PATH environmental variable to point to where libblysk.a is located
 
-To compile YOUR OpenMP task program, you need to the following:
+3) Set the LD_LIBRARY_PATHY environmental variable to point to where the scheduler plugins are.
 
-gcc -fopenmp -c *your_source.c*
-gcc -lblysk -ldl -lpthread *your_source.o* -o *your_binary*
+4) Compile your desired OpenMP tasking program by linking against the libblysk.a
+   Example:
+             gcc -c -fopenmp fibonacci.c -o fibonacci.o
+	     gcc -lblysk -ldl -lpthread fibonacci.o -o fib
+
+5) Run the application. You can change the number of threads booted by parallel sections using the envionrmental variable OMP_NUM_THREADS.
+   You can change the scheduler plugin that is used by modifying the environmental variable OMP_TASK_SCHEDULER.
+
+   For example: OMP_NUM_THREADS=16 OMP_TASK_SCHEDULER=worksteal ./fib 
+                will ensure that 16 threads are booted and all are using the workstealing scheduling algorithm.
+
+   The following schedulers are available:
+
+       1) OMP_TASK_SCHEDULER=central
+          Description: A centralized queue scheduler that uses heavy locks to protect concurrent accesses to the queue
+       
+       2) OMP_TASK_SCHEDULER=worksteal
+          Description: A distributed scheduler that uses per-queue heavy locks to protect concurrent accesses to the queue
+
+       3) OMP_TASK_SCHEDULER=central_spec
+          Description: A fast, lock-free version of the central-scheduler
+
+       4) OMP_TASK_SCHEDULER=worksteal_stack
+          Description: A very fast, lock-free version of the worksteal scheduler. This should be used for performance runs.
+ 
